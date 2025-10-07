@@ -1,6 +1,6 @@
 package server
 
-// jobData represents the job information sent to clients
+// JobData represents the job information sent to clients
 type JobData struct {
 	ID             string   `json:"id"`
 	Name           string   `json:"name"`
@@ -12,7 +12,7 @@ type JobData struct {
 	ScheduleDetail string   `json:"scheduleDetail"` // technical schedule details (cron expression, interval, etc.)
 }
 
-// createJobRequest represents the request to create a new job
+// CreateJobRequest represents the request to create a new job
 type CreateJobRequest struct {
 	Name           string   `json:"name"`
 	Type           string   `json:"type"` // duration, cron, daily, weekly, monthly

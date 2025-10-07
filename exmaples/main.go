@@ -177,10 +177,10 @@ func main() {
 		gocron.WithName("event-listener-job"),
 		gocron.WithTags("events", "monitoring"),
 		gocron.WithEventListeners(
-			gocron.AfterJobRuns(func(jobID uuid.UUID, jobName string) {
+			gocron.AfterJobRuns(func(_ uuid.UUID, jobName string) {
 				log.Printf("   → AfterJobRuns: %s completed", jobName)
 			}),
-			gocron.BeforeJobRuns(func(jobID uuid.UUID, jobName string) {
+			gocron.BeforeJobRuns(func(_ uuid.UUID, jobName string) {
 				log.Printf("   → BeforeJobRuns: %s starting", jobName)
 			}),
 		),

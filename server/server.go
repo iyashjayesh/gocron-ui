@@ -21,29 +21,32 @@ import (
 //go:embed static/*
 var staticFiles embed.FS
 
+// Server is the main server struct which contains the scheduler, router, webSocket clients, webSocket mutex, upgrader, and config
 type Server struct {
 	Scheduler gocron.Scheduler
 	Router    http.Handler
 	wsClients map[*websocket.Conn]bool
 	wsMutex   sync.RWMutex
 	upgrader  websocket.Upgrader
-	config    ServerConfig
+	config    Config
 }
 
-type ServerConfig struct {
+// Config is the server configuration in which user can set the title of the UI
+type Config struct {
 	Title string `json:"title"`
 }
 
-func NewServer(scheduler gocron.Scheduler, port int, opts ...ServerOption) *Server {
+// NewServer creates a new server instance
+func NewServer(scheduler gocron.Scheduler, _ int, opts ...Option) *Server {
 	s := &Server{
 		Scheduler: scheduler,
 		wsClients: make(map[*websocket.Conn]bool),
 		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
+			CheckOrigin: func(_ *http.Request) bool {
 				return true // allow all origins for development
 			},
 		},
-		config: ServerConfig{
+		config: Config{
 			Title: "GoCron UI", // default title
 		},
 	}
@@ -92,22 +95,22 @@ func NewServer(scheduler gocron.Scheduler, port int, opts ...ServerOption) *Serv
 	return s
 }
 
-// serverOption is a functional option for configuring the server
-type ServerOption func(*Server)
+// Option is a functional option for configuring the server
+type Option func(*Server)
 
 // WithTitle sets a custom title for the UI
-func WithTitle(title string) ServerOption {
+func WithTitle(title string) Option {
 	return func(s *Server) {
 		s.config.Title = title
 	}
 }
 
-// get server configuration
-func (s *Server) GetConfig(w http.ResponseWriter, r *http.Request) {
+// GetConfig gets server configuration
+func (s *Server) GetConfig(w http.ResponseWriter, _ *http.Request) {
 	respondJSON(w, http.StatusOK, s.config)
 }
 
-// webSocket handler
+// HandleWebSocket is a webSocket handler
 func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -144,7 +147,7 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// broadcast job updates to all connected webSocket clients
+// broadcastJobUpdates broadcasts job updates to all connected webSocket clients
 func (s *Server) broadcastJobUpdates() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -180,13 +183,13 @@ func (s *Server) broadcastJobUpdates() {
 	}
 }
 
-// get all jobs
-func (s *Server) GetJobs(w http.ResponseWriter, r *http.Request) {
+// GetJobs gets all jobs
+func (s *Server) GetJobs(w http.ResponseWriter, _ *http.Request) {
 	jobs := s.getJobsData()
 	respondJSON(w, http.StatusOK, jobs)
 }
 
-// get single job
+// GetJob gets a single job
 func (s *Server) GetJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -209,7 +212,7 @@ func (s *Server) GetJob(w http.ResponseWriter, r *http.Request) {
 	respondError(w, http.StatusNotFound, "Job not found")
 }
 
-// create a new job
+// CreateJob creates a new job
 func (s *Server) CreateJob(w http.ResponseWriter, r *http.Request) {
 	var req CreateJobRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -286,7 +289,7 @@ func (s *Server) CreateJob(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, jobData)
 }
 
-// delete a job
+// DeleteJob deletes a job
 func (s *Server) DeleteJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -305,7 +308,7 @@ func (s *Server) DeleteJob(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"message": "Job deleted successfully"})
 }
 
-// run a job immediately
+// RunJob runs a job immediately
 func (s *Server) RunJob(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
@@ -331,8 +334,8 @@ func (s *Server) RunJob(w http.ResponseWriter, r *http.Request) {
 	respondError(w, http.StatusNotFound, "Job not found")
 }
 
-// stop the scheduler
-func (s *Server) StopScheduler(w http.ResponseWriter, r *http.Request) {
+// StopScheduler stops the scheduler
+func (s *Server) StopScheduler(w http.ResponseWriter, _ *http.Request) {
 	if err := s.Scheduler.StopJobs(); err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -340,8 +343,8 @@ func (s *Server) StopScheduler(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"message": "Scheduler stopped"})
 }
 
-// start the scheduler
-func (s *Server) StartScheduler(w http.ResponseWriter, r *http.Request) {
+// StartScheduler starts the scheduler
+func (s *Server) StartScheduler(w http.ResponseWriter, _ *http.Request) {
 	s.Scheduler.Start()
 	respondJSON(w, http.StatusOK, map[string]string{"message": "Scheduler started"})
 }
@@ -440,16 +443,17 @@ func (s *Server) inferSchedule(job gocron.Job, nextRuns []time.Time) (string, st
 		if interval < time.Minute {
 			seconds := int(interval.Seconds())
 			return fmt.Sprintf("Every %d seconds", seconds), fmt.Sprintf("Duration: %ds", seconds)
-		} else if interval < time.Hour {
+		}
+		if interval < time.Hour {
 			minutes := int(interval.Minutes())
 			return fmt.Sprintf("Every %d minutes", minutes), fmt.Sprintf("Duration: %dm", minutes)
-		} else if interval < 24*time.Hour {
+		}
+		if interval < 24*time.Hour {
 			hours := int(interval.Hours())
 			return fmt.Sprintf("Every %d hours", hours), fmt.Sprintf("Duration: %dh", hours)
-		} else {
-			days := int(interval.Hours() / 24)
-			return fmt.Sprintf("Every %d days", days), fmt.Sprintf("Duration: %dd", days)
 		}
+		days := int(interval.Hours() / 24)
+		return fmt.Sprintf("Every %d days", days), fmt.Sprintf("Duration: %dd", days)
 	}
 
 	return "Scheduled", "Custom schedule"
@@ -482,11 +486,13 @@ func parseTime(timeStr string) (gocron.AtTime, error) {
 	return gocron.NewAtTime(uint(t.Hour()), uint(t.Minute()), uint(t.Second())), nil
 }
 
-// respond with JSON
+// respondJSON responds with JSON
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("Error encoding JSON response: %v", err)
+	}
 }
 
 func respondError(w http.ResponseWriter, status int, message string) {
