@@ -10,9 +10,9 @@ A lightweight, real-time web interface for monitoring and controlling [gocron](h
 If you want to chat, you can find us on Slack at
 [<img src="https://img.shields.io/badge/gophers-gocron-brightgreen?logo=slack">](https://gophers.slack.com/archives/CQ7T0T1FW)
 
-## Demo
-
-https://github.com/user-attachments/assets/8209a047-283f-4182-afc6-447cc685647d
+<div align="center">
+  <img src="demo.gif" width="100%" alt="GoCron UI Demo">
+</div>
 
 ## Installation
 
