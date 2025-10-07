@@ -59,6 +59,7 @@ func main() {
 
     // start the web UI server
     srv := server.NewServer(scheduler, 8080)
+    // srv := server.NewServer(scheduler, 8080, server.WithTitle("My Custom Scheduler")) // with custom title if you want to customize the title of the UI (optional)
     log.Println("GoCron UI available at http://localhost:8080")
     log.Fatal(http.ListenAndServe(":8080", srv.Router))
 }
@@ -72,6 +73,7 @@ Open your browser to `http://localhost:8080` to view the dashboard.
 - **Job Control** - Trigger jobs manually or remove them from the scheduler
 - **Schedule Preview** - View upcoming executions for each job
 - **Tagging System** - Organize and filter jobs by tags
+- **Configurable Title** - Customize the UI header and page title to match your needs
 - **Embedded UI** - Static files compiled into binary, zero external dependencies
 - **Portable** - Single self-contained binary deployment
 
@@ -184,7 +186,7 @@ You can customize the UI title using the `WithTitle` option:
 srv := server.NewServer(scheduler, 8080, server.WithTitle("My Custom Scheduler"))
 ```
 
-This will update both the browser tab title and the header title in the UI.
+This will update both the browser tab title and the header title in the UI. When using a custom title, the UI automatically displays a subtle "powered by gocron-ui" attribution below the title.
 
 #### Command-line Example
 
