@@ -27,9 +27,14 @@ type Server struct {
 	wsClients map[*websocket.Conn]bool
 	wsMutex   sync.RWMutex
 	upgrader  websocket.Upgrader
+	config    ServerConfig
 }
 
-func NewServer(scheduler gocron.Scheduler, port int) *Server {
+type ServerConfig struct {
+	Title string `json:"title"`
+}
+
+func NewServer(scheduler gocron.Scheduler, port int, opts ...ServerOption) *Server {
 	s := &Server{
 		Scheduler: scheduler,
 		wsClients: make(map[*websocket.Conn]bool),
@@ -38,12 +43,21 @@ func NewServer(scheduler gocron.Scheduler, port int) *Server {
 				return true // allow all origins for development
 			},
 		},
+		config: ServerConfig{
+			Title: "GoCron UI", // default title
+		},
+	}
+
+	// apply options
+	for _, opt := range opts {
+		opt(s)
 	}
 
 	router := mux.NewRouter()
 
 	// api routes
 	api := router.PathPrefix("/api").Subrouter()
+	api.HandleFunc("/config", s.GetConfig).Methods("GET")
 	api.HandleFunc("/jobs", s.GetJobs).Methods("GET")
 	api.HandleFunc("/jobs", s.CreateJob).Methods("POST")
 	api.HandleFunc("/jobs/{id}", s.GetJob).Methods("GET")
@@ -76,6 +90,21 @@ func NewServer(scheduler gocron.Scheduler, port int) *Server {
 	go s.broadcastJobUpdates()
 
 	return s
+}
+
+// serverOption is a functional option for configuring the server
+type ServerOption func(*Server)
+
+// WithTitle sets a custom title for the UI
+func WithTitle(title string) ServerOption {
+	return func(s *Server) {
+		s.config.Title = title
+	}
+}
+
+// get server configuration
+func (s *Server) GetConfig(w http.ResponseWriter, r *http.Request) {
+	respondJSON(w, http.StatusOK, s.config)
 }
 
 // webSocket handler

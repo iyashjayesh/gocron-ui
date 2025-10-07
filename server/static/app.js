@@ -10,8 +10,38 @@ const WS_URL = `ws://${window.location.host}/ws`;
 
 // initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    loadConfig();
     connectWebSocket();
 });
+
+// load server configuration
+async function loadConfig() {
+    try {
+        const response = await fetch(`${API_BASE}/config`);
+        if (response.ok) {
+            const config = await response.json();
+            if (config.title) {
+                // update page title
+                document.title = config.title;
+
+                // update header title
+                const mainTitle = document.getElementById('main-title');
+                const poweredBy = document.getElementById('powered-by');
+
+                if (mainTitle) {
+                    mainTitle.textContent = config.title;
+                }
+
+                if (poweredBy && config.title !== 'GoCron UI') {
+                    poweredBy.style.display = 'block';
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load config:', err);
+        // fallback to default title
+    }
+}
 
 // webSocket connection
 function connectWebSocket() {
@@ -288,4 +318,3 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-

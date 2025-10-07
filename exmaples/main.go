@@ -20,6 +20,7 @@ import (
 
 func main() {
 	port := flag.Int("port", 8080, "Port to run the server on")
+	title := flag.String("title", "GoCron Scheduler", "Custom title for the UI")
 	flag.Parse()
 
 	// create the gocron scheduler
@@ -239,8 +240,8 @@ func main() {
 	scheduler.Start()
 	log.Println("Scheduler started with", len(scheduler.Jobs()), "jobs")
 
-	// create and start the API server
-	srv := server.NewServer(scheduler, *port)
+	// create and start the API server with custom title
+	srv := server.NewServer(scheduler, *port, server.WithTitle(*title))
 
 	// start server in a goroutine
 	go func() {

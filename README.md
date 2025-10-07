@@ -10,16 +10,9 @@ A lightweight, real-time web interface for monitoring and controlling [gocron](h
 If you want to chat, you can find us on Slack at
 [<img src="https://img.shields.io/badge/gophers-gocron-brightgreen?logo=slack">](https://gophers.slack.com/archives/CQ7T0T1FW)
 
+## Demo
 
-## Features
-
-- **Real-time Monitoring** - WebSocket-based live job status updates
-- **Job Control** - Trigger jobs manually or remove them from the scheduler
-- **Schedule Preview** - View upcoming executions for each job
-- **Tagging System** - Organize and filter jobs by tags
-- **Embedded UI** - Static files compiled into binary, zero external dependencies
-- **Portable** - Single self-contained binary deployment
-- **Modern UI** - Responsive design with vanilla JavaScript (no build step)
+https://github.com/user-attachments/assets/8209a047-283f-4182-afc6-447cc685647d
 
 ## Installation
 
@@ -73,12 +66,22 @@ func main() {
 
 Open your browser to `http://localhost:8080` to view the dashboard.
 
+## Features
+
+- **Real-time Monitoring** - WebSocket-based live job status updates
+- **Job Control** - Trigger jobs manually or remove them from the scheduler
+- **Schedule Preview** - View upcoming executions for each job
+- **Tagging System** - Organize and filter jobs by tags
+- **Embedded UI** - Static files compiled into binary, zero external dependencies
+- **Portable** - Single self-contained binary deployment
+
 ## API Reference
 
 ### REST Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| `GET` | `/api/config` | Get server configuration |
 | `GET` | `/api/jobs` | List all jobs |
 | `GET` | `/api/jobs/{id}` | Get job details |
 | `POST` | `/api/jobs/{id}/run` | Execute job immediately |
@@ -163,12 +166,49 @@ See [Dockerfile](./Dockerfile) for details.
 The server accepts the following configuration through the `NewServer` function:
 
 ```go
-server.NewServer(scheduler gocron.Scheduler, port int) *Server
+server.NewServer(scheduler gocron.Scheduler, port int, opts ...ServerOption) *Server
 ```
 
 **Parameters:**
 - `scheduler` - Your configured gocron scheduler instance
 - `port` - HTTP port to listen on
+- `opts` - Optional configuration settings
+
+### Configuration Options
+
+#### Custom Title
+
+You can customize the UI title using the `WithTitle` option:
+
+```go
+srv := server.NewServer(scheduler, 8080, server.WithTitle("My Custom Scheduler"))
+```
+
+This will update both the browser tab title and the header title in the UI.
+
+#### Command-line Example
+
+You can also make the title configurable via command-line flags:
+
+```go
+func main() {
+    port := flag.Int("port", 8080, "Port to run the server on")
+    title := flag.String("title", "GoCron UI", "Custom title for the UI")
+    flag.Parse()
+
+    scheduler, _ := gocron.NewScheduler()
+    // ... add jobs ...
+    scheduler.Start()
+
+    srv := server.NewServer(scheduler, *port, server.WithTitle(*title))
+    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), srv.Router))
+}
+```
+
+Then run with:
+```bash
+go run main.go -port 8080 -title "My Awesome Scheduler"
+```
 
 ## Important Notes
 
@@ -180,7 +220,7 @@ GoCron UI is a **monitoring and control interface** for jobs defined in your Go 
 - ✅ Manual job triggering
 - ✅ Job deletion
 - ✅ Schedule viewing
-- Job creation (must be done in code)
+- ❌ Job creation (must be done in code)
 
 ## Production Considerations
 
@@ -188,17 +228,8 @@ GoCron UI is a **monitoring and control interface** for jobs defined in your Go 
 - **CORS**: Default CORS settings allow all origins. Restrict this in production environments.
 - **Error Handling**: Implement proper error logging and monitoring for production use.
 
-## Maintainer
-
-<div align="left">
-    <div style="display: flex; justify-content: left; align-items: center; gap: 6px;">
-        <a href="https://github.com/iyashjayesh" style="display: flex; align-items: center; text-decoration: none;">
-            <img src="https://avatars.githubusercontent.com/u/53042582" width="20" style="border-radius:50%;" />
-            <span style="margin-left: 5px; font-weight: bold;">Yash</span>
-        </a>
-        <span>&lt;&gt; Maintainer</span>
-    </div>
-</div>
+## Maintainers
+- [@iyashjayesh](https://github.com/iyashjayesh) | Maintainer
 
 ## Star History
 
