@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Frontend
+frontend/node_modules
+frontend/build
+frontend/.env*
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+go.work
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (keep in image)
+# README.md
+# EXAMPLES.md
+# QUICKSTART.md
+
+# Build artifacts
+gocron-ui
+gocron-ui.exe
+

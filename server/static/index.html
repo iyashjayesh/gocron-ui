@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoCron UI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="header-title">
+                    <span id="main-title">GoCron UI</span>
+                    <small id="powered-by" class="powered-by" style="display: none;">powered by gocron-ui</small>
+                </h1>
+                <div class="header-status">
+                    <span id="connection-status" class="status-indicator disconnected">
+                        ○ Disconnected
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- main content -->
+    <main class="main-content">
+        <div class="container">
+            <div id="error-banner" class="error-banner" style="display: none;">
+                <span id="error-message"></span>
+                <button onclick="hideError()">×</button>
+            </div>
+
+            <div class="actions">
+                <div class="info-banner">
+                    <span>Monitoring <strong id="job-count">0</strong> scheduled jobs in real-time</span>
+                </div>
+            </div>
+
+            <div id="jobs-container">
+                <!-- jobs will be rendered here -->
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
